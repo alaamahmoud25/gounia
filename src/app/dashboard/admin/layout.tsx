@@ -13,7 +13,7 @@ export default function adminDashboardLayout({
   return (
     <div className="w-full h-full">
       {/* Sidebar */}
-      <Sidebar isAdmin={true} />
+      <Sidebar isAdmin />
       <div className="ml-[300px]">
         {/* Header */}
         <Header />
