@@ -1,10 +1,25 @@
 import React from 'react'
+// Header
+import Header from "@/components/dashboard/header/header";
+// Sidebar
+import Sidebar from "@/components/dashboard/sidebar/sidebar";
 
-export default function adminDashboardLayout({children}: {children: React.ReactNode}) {
+export default function adminDashboardLayout({
+  children
+}: {
+  children: React.ReactNode
+  }) {
+  
   return (
-    <div>
-      {children}
+    <div className="w-full h-full">
+      {/* Sidebar */}
+      <Sidebar isAdmin={true} />
+      <div className="ml-[300px]">
+        {/* Header */}
+        <Header />
+          <div className="w-full mt-[75px] p-4">{children}</div>
+      </div>
     </div>
-  )
+  );
 }
 
