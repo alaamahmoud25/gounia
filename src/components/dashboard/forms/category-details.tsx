@@ -1,27 +1,28 @@
-'use client';
+"use client";
 
 // React
-import { FC, useEffect } from 'react';
+import { FC, useEffect } from "react";
 
 // Prisma model
-import { Category } from '@prisma/client';
+import { Category } from "@prisma/client";
 
-// Form handling
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+// Form handling utilities
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // Schema
-import { CategoryFormSchema } from '@/lib/schemas';
+import { CategoryFormSchema } from "@/lib/schemas";
 
 // UI Components
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -30,52 +31,74 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import ImageUpload from '../shared/image-upload';
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import ImageUpload from "../shared/image-upload";
 
-import { Input } from '@/components/ui/input';
+// Queries
+import { upsertCategory } from "@/queries/category";
 
-import { useRouter } from 'next/navigation';
-import { AlertDialog } from '@/components/ui/alert-dialog';
+// Utils
+import { v4 } from "uuid";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface CategoryDetailsProps {
   data?: Category;
   cloudinary_key: string;
 }
 
-const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => {
-  
+const CategoryDetails: FC<CategoryDetailsProps> = ({
+  data,
+  cloudinary_key,
+}) => {
+  const router = useRouter();
 
-  type CategoryFormValues = z.infer<typeof CategoryFormSchema>;
-
+  // Form setup
   const form = useForm<z.infer<typeof CategoryFormSchema>>({
-    mode: 'onChange',
     resolver: zodResolver(CategoryFormSchema),
     defaultValues: {
-      name: data?.name ?? '',
+      name: data?.name || "",
       image: data?.image ? [{ url: data.image }] : [],
-      url: data?.url ?? '',
-      featured: typeof data?.featured === 'boolean' ? data.featured : false,
+      url: data?.url || "",
+      featured: data?.featured || false,
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
-  useEffect(() => {
-    if (data) {
-      form.reset({
-        name: data?.name ?? '',
-        image: data?.image ? [{ url: data.image }] : [],
-        url: data?.url ?? '',
-        featured: typeof data?.featured === 'boolean' ? data.featured : false,
-      });
-    }
-  }, [data, form]);
+  // Submit handler
+  const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
+    try {
+      console.log("Form values:", values);
 
-  const handleSubmit = async (values:z.infer<typeof CategoryFormSchema>) => {
-    console.log(values);
+      const response = await upsertCategory({
+        id: data?.id || v4(),
+        name: values.name,
+        image: values.image?.[0]?.url || null,
+        url: values.url,
+        featured: values.featured,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      toast.success(
+        data?.id
+          ? "Category updated successfully!"
+          : "Category created successfully!"
+      );
+
+      if (data?.id) {
+        router.refresh();
+      } else {
+        router.push("/dashboard/admin/categories");
+      }
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error(error.message || "Something went wrong");
+    }
   };
 
   return (
@@ -84,17 +107,13 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => 
         <CardHeader>
           <CardTitle>Category Information</CardTitle>
           <CardDescription>
-            {data?.id
-              ? `Update ${data.name} category information.`
-              : 'Create a new category. You can always edit it later.'}
+            {data?.id ? "Update category" : "Create a new category"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-4"
-            >
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              {/* Image Field */}
               <FormField
                 control={form.control}
                 name="image"
@@ -103,17 +122,11 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => 
                     <FormControl>
                       <ImageUpload
                         type="profile"
-                        value={field.value.map((image) => image.url)}
-                        disabled={isLoading}
                         cloudinary_key={cloudinary_key}
+                        value={(field.value || []).map((image) => image.url)}
+                        disabled={isLoading}
                         onChange={(url) => field.onChange([{ url }])}
-                        onRemove={(url) =>
-                          field.onChange([
-                            ...field.value.filter(
-                              (current) => current.url !== url
-                            ),
-                          ])
-                        }
+                        onRemove={() => field.onChange([])}
                       />
                     </FormControl>
                     <FormMessage />
@@ -121,34 +134,37 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => 
                 )}
               />
 
+              {/* Name Field */}
               <FormField
-                disabled={isLoading}
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Category name</FormLabel>
+                  <FormItem>
+                    <FormLabel>Category Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Name" {...field} />
+                      <Input placeholder="Enter category name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* URL Field */}
               <FormField
-                disabled={isLoading}
                 control={form.control}
                 name="url"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Category url</FormLabel>
+                  <FormItem>
+                    <FormLabel>Category URL *</FormLabel>
                     <FormControl>
-                      <Input placeholder="/category-url" {...field} />
+                      <Input placeholder="category-url" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Featured Field */}
               <FormField
                 control={form.control}
                 name="featured"
@@ -157,25 +173,21 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => 
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        // @ts-ignore
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>Featured</FormLabel>
                       <FormDescription>
-                        This Category will appear on the home page
+                        This category will appear on the home page
                       </FormDescription>
                     </div>
                   </FormItem>
                 )}
               />
+
               <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? 'loading...'
-                  : data?.id
-                  ? 'Save category information'
-                  : 'Create category'}
+                {isLoading ? "Creating..." : data?.id ? "Update Category" : "Create Category"}
               </Button>
             </form>
           </Form>

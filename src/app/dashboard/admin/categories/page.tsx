@@ -1,10 +1,3 @@
-
-import React from 'react';
-
 export default function AdminCategoriesPage() {
-  return (
-    <div>
-  
-    </div>
-  )
+  return <div>Admin categories page</div>;
 }

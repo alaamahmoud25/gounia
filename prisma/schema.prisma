@@ -21,9 +21,9 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
+    id      String @id @default(uuid())
+  name    String
+  email   String @unique
   picture   String   @db.Text
   role      Role     @default(USER)
   createdAt DateTime @default(now())
@@ -33,10 +33,13 @@ model User {
 model Category {
   id       String  @id @default(uuid())
   name     String
-  image    String
+  image    String?
   url      String  @unique
   featured Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+
