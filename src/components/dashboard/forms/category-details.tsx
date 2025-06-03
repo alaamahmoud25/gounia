@@ -47,22 +47,19 @@ import { useRouter } from "next/navigation";
 
 interface CategoryDetailsProps {
   data?: Category;
-  cloudinary_key: string;
+
 }
 
-const CategoryDetails: FC<CategoryDetailsProps> = ({
-  data,
-  cloudinary_key,
-}) => {
+const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
   const router = useRouter();
 
   // Form setup
   const form = useForm<z.infer<typeof CategoryFormSchema>>({
     resolver: zodResolver(CategoryFormSchema),
     defaultValues: {
-      name: data?.name || "",
+      name: data?.name || '',
       image: data?.image ? [{ url: data.image }] : [],
-      url: data?.url || "",
+      url: data?.url || '',
       featured: data?.featured || false,
     },
   });
@@ -72,7 +69,7 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({
   // Submit handler
   const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
     try {
-      console.log("Form values:", values);
+      console.log('Form values:', values);
 
       const response = await upsertCategory({
         id: data?.id || v4(),
@@ -86,18 +83,18 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({
 
       toast.success(
         data?.id
-          ? "Category updated successfully!"
-          : "Category created successfully!"
+          ? 'Category updated successfully!'
+          : 'Category created successfully!'
       );
 
       if (data?.id) {
         router.refresh();
       } else {
-        router.push("/dashboard/admin/categories");
+        router.push('/dashboard/admin/categories');
       }
     } catch (error: any) {
-      console.error("Error:", error);
-      toast.error(error.message || "Something went wrong");
+      console.error('Error:', error);
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -107,12 +104,15 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({
         <CardHeader>
           <CardTitle>Category Information</CardTitle>
           <CardDescription>
-            {data?.id ? "Update category" : "Create a new category"}
+            {data?.id ? 'Update category' : 'Create a new category'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               {/* Image Field */}
               <FormField
                 control={form.control}
@@ -122,7 +122,7 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({
                     <FormControl>
                       <ImageUpload
                         type="profile"
-                        cloudinary_key={cloudinary_key}
+                      
                         value={(field.value || []).map((image) => image.url)}
                         disabled={isLoading}
                         onChange={(url) => field.onChange([{ url }])}
@@ -187,7 +187,11 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({
               />
 
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : data?.id ? "Update Category" : "Create Category"}
+                {isLoading
+                  ? 'Creating...'
+                  : data?.id
+                  ? 'Update Category'
+                  : 'Create Category'}
               </Button>
             </form>
           </Form>

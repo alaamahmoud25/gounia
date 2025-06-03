@@ -85,3 +85,13 @@ export const upsertCategory = async (category: Partial<Category>) => {
     throw error;
   }
 };
+
+export const getAllCategories = async () => {
+  //retrieve all categories from the databas
+  const categories = await db.category.findMany({
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+  return categories;
+};
